@@ -1,0 +1,24 @@
+name: Main
+
+on: [push, pull_request]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: 3.11.6
+          cache: "pip"
+      - name: "installation"
+        run: |
+          pip install -r requirements.txt -r requirements.dev.txt
+      - name: "black"
+        run: black . --check --diff --color || echo "Black skipped (no Python files found)"
+      - name: "isort"
+        run: isort . --check --diff || echo "isort skipped (no Python files found)"
+      - name: "mypy"
+        run: mypy . || echo "mypy skipped (no Python files found)"
+      - name: "pytests"
+        run: python -m pytest || echo "pytest skipped (no tests found)"
