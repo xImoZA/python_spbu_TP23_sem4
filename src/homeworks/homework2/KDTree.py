@@ -1,6 +1,6 @@
 import heapq
 from dataclasses import dataclass, field
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 import numpy as np
 
@@ -10,7 +10,7 @@ T = TypeVar("T", bound=float)
 @dataclass
 class Point(Generic[T]):
     coord: tuple[T, ...]
-    cls: Optional[int]
+    cls: Any = None
 
     def __lt__(self, other):
         if isinstance(other, Point):
@@ -77,16 +77,16 @@ class KDTree:
         if k <= 0:
             raise ValueError("k must be positive")
 
-        knn: dict[Point[T], list[Point[T]]] = {}
+        dict_neighbors: dict[Point[T], list[Point[T]]] = {}
         for point in points:
-            knn_point: list[tuple[float, Point[T]]] = KDTree._search(
+            knn_point: list[tuple[float, Point[T]]] = KDTree.search(
                 point, k, self.root, []
             )
-            knn[point] = [heapq.heappop(knn_point)[1] for _ in range(k)]
-        return knn
+            dict_neighbors[point] = [heapq.heappop(knn_point)[1] for _ in range(k)]
+        return dict_neighbors
 
     @staticmethod
-    def _search(
+    def search(
         target: Point[T],
         k: int,
         node: Node[T] | None,
@@ -120,12 +120,12 @@ class KDTree:
                 next_node = node.right
                 other_node = node.left
 
-            neighbors = KDTree._search(target, k, next_node, neighbors)
+            neighbors = KDTree.search(target, k, next_node, neighbors)
             if (
                 len(neighbors) < k
                 or abs(target.coord[axis] - node.median) < -neighbors[0][0]
             ):
-                neighbors = KDTree._search(target, k, other_node, neighbors)
+                neighbors = KDTree.search(target, k, other_node, neighbors)
 
         return neighbors
 
