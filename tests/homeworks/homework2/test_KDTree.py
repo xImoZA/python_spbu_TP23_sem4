@@ -2,8 +2,8 @@ import math
 import random
 
 import hypothesis.strategies as st
+import numpy as np
 from hypothesis import given
-
 from src.homeworks.homework2.KDTree import KDTree, Point, T
 
 
@@ -17,7 +17,7 @@ def brute_force_search(
             dist = KDTree.distance(test_point, point)
             neighbors.append((point, dist))
 
-        neighbors = sorted(neighbors, key=lambda x: x[1])[:k]
+        neighbors = sorted(neighbors[:k], key=lambda x: x[1])
         knn[test_point] = [p[0] for p in neighbors]
 
     return knn
@@ -32,11 +32,11 @@ class TestKDTree:
     )
     def test_query(self, train_size, k, leaf_size, neighbours):
         x_train = [
-            Point(tuple(random.randint(-100, 100) for _ in range(k)), None)
+            Point(np.array([random.randint(-100, 100) for _ in range(k)]))
             for _ in range(train_size)
         ]
         x_test = [
-            Point(tuple(random.randint(-100, 100) for _ in range(k)), None)
+            Point(np.array([random.randint(-100, 100) for _ in range(k)]))
             for _ in range(30)
         ]
         kdtree = KDTree(x_train, leaf_size)
@@ -53,4 +53,4 @@ class TestKDTree:
             )
 
             for i in range(neighbours):
-                assert math.isclose(stupid_dist[i], tree_dist[i], rel_tol=1e-9)
+                assert math.isclose(stupid_dist[i], tree_dist[i])

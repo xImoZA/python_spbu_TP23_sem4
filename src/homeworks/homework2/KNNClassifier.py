@@ -1,20 +1,21 @@
-from typing import Any
+from typing import Any, Generic
 
+import numpy as np
 from src.homeworks.homework2.KDTree import KDTree, Point, T
 
 
-class KNNClassifier:
+class KNNClassifier(Generic[T]):
     def __init__(self, k: int, leaf_size: int):
         self.k: int = k
         self.leaf_size: int = leaf_size
-        self.classifier: KDTree | None = None
-        self.clss: list[Any] | None = None
+        self.classifier: KDTree[T] | None = None
+        self.clss: dict[Point[T], Any] | None = None
 
     def fit(self, data: list[Point[T]], clss: list[Any]):
-        self.classifier = KDTree(data, leaf_size=3)
-        self.clss = clss
+        self.classifier = KDTree(data, leaf_size=self.leaf_size)
+        self.clss = {point: cls for point, cls in zip(data, clss)}
 
-    def predict_proba(self, points: list[Point[T]]) -> dict[Point[T], list[float]]:
+    def predict_proba(self, points: list[Point[T]]) -> dict[Point[T], dict[Any, float]]:
         if self.classifier is None or self.clss is None:
             raise ValueError("Classifier has not been fitted yet.")
 
@@ -25,22 +26,20 @@ class KNNClassifier:
         dict_clss = {}
         for point in points:
             neighbors = dict_neighbors[point]
-            odds = [
-                len([p for p in neighbors if p.cls == cls]) / self.k
-                for cls in self.clss
-            ]
+            odds = {}
+            for cls in set(self.clss.values()):
+                odds[cls] = (
+                    len([point for point in neighbors if self.clss[point] == cls])
+                    / self.k
+                )
 
             dict_clss[point] = odds
 
         return dict_clss
 
-    def get_cls(self, odds: list[float]) -> Any:
-        if self.clss is None:
-            raise ValueError("Classifier has not been fitted yet.")
-
-        ind = odds.index(max(odds))
-        return self.clss[ind]
-
-    def predict(self, points: list[Point[T]]) -> list[float]:
-        dict_clss: dict[Point[T], list[float]] = self.predict_proba(points)
-        return [self.get_cls(odds) for point, odds in dict_clss.items()]
+    def predict(self, points: list[Point[T]]) -> list[Any]:
+        dict_clss: dict[Point[T], dict[Any, float]] = self.predict_proba(points)
+        return [
+            max(dict_clss[point].items(), key=lambda item: item[1])[0]
+            for point in points
+        ]

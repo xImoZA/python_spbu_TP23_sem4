@@ -1,54 +1,114 @@
-from typing import Any
+from typing import Any, Generic
 
+import numpy as np
 import pytest
-
 from src.homeworks.homework2.KDTree import Point, T
 from src.homeworks.homework2.KNNClassifier import KNNClassifier
 
 
-class TestKNNClassifier:
-    classifier = KNNClassifier(5, 3)
-    data = [
-        Point((1.2, 3.4, 0.5), "red"),
-        Point((2.3, 1.1, 4.5), "green"),
-        Point((0.8, 2.2, 3.3), "blue"),
-        Point((4.5, 0.5, 1.2), "red"),
-        Point((3.1, 2.8, 2.0), "green"),
-        Point((1.0, 1.0, 1.0), "blue"),
-        Point((5.0, 3.0, 0.1), "red"),
-        Point((2.5, 2.5, 2.5), "green"),
-        Point((0.2, 4.0, 1.5), "blue"),
-        Point((3.7, 1.9, 0.8), "red"),
-        Point((1.5, 3.0, 2.2), "green"),
-        Point((0.5, 0.5, 4.0), "blue"),
-        Point((4.0, 2.0, 1.0), "red"),
-        Point((2.0, 4.0, 3.0), "green"),
-        Point((1.8, 1.2, 2.8), "blue"),
-        Point((3.0, 0.0, 2.5), "red"),
-        Point((1.0, 2.0, 3.0), "green"),
-        Point((0.0, 3.5, 1.0), "blue"),
-        Point((2.2, 1.5, 0.7), "red"),
-        Point((3.5, 2.5, 1.5), "green"),
+class TestKNNClassifier(Generic[T]):
+    classifier: KNNClassifier[T] = KNNClassifier(5, 3)
+    data: list[Point[T]] = [
+        Point(np.array([1.2, 3.4, 0.5])),
+        Point(np.array([2.3, 1.1, 4.5])),
+        Point(np.array([0.8, 2.2, 3.3])),
+        Point(np.array([4.5, 0.5, 1.2])),
+        Point(np.array([3.1, 2.8, 2.0])),
+        Point(np.array([1.0, 1.0, 1.0])),
+        Point(np.array([5.0, 3.0, 0.1])),
+        Point(np.array([2.5, 2.5, 2.5])),
+        Point(np.array([0.2, 4.0, 1.5])),
+        Point(np.array([3.7, 1.9, 0.8])),
+        Point(np.array([1.5, 3.0, 2.2])),
+        Point(np.array([0.5, 0.5, 4.0])),
+        Point(np.array([4.0, 2.0, 1.0])),
+        Point(np.array([2.0, 4.0, 3.0])),
+        Point(np.array([1.8, 1.2, 2.8])),
+        Point(np.array([3.0, 0.0, 2.5])),
+        Point(np.array([1.0, 2.0, 3.0])),
+        Point(np.array([0.0, 3.5, 1.0])),
+        Point(np.array([2.2, 1.5, 0.7])),
+        Point(np.array([3.5, 2.5, 1.5])),
     ]
-    clss = ["red", "green", "blue"]
+    clss = [
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+        "blue",
+        "red",
+        "green",
+    ]
     classifier.fit(data, clss)
 
     @pytest.mark.parametrize(
         "points,expected_cls",
         [
-            ([Point((2.0, 2.0, 2.0))], {Point((2.0, 2.0, 2.0)): [0.2, 0.6, 0.2]}),
-            ([Point((3.0, 1.0, 1.0))], {Point((3.0, 1.0, 1.0)): [0.8, 0.2, 0.0]}),
-            ([Point((0.5, 3.5, 2.5))], {Point((0.5, 3.5, 2.5)): [0, 0.4, 0.6]}),
+            (
+                [Point(np.array([2.0, 2.0, 2.0]))],
+                {
+                    Point(np.array([2.0, 2.0, 2.0])): {
+                        "red": 0.2,
+                        "green": 0.6,
+                        "blue": 0.2,
+                    }
+                },
+            ),
+            (
+                [Point(np.array([3.0, 1.0, 1.0]))],
+                {
+                    Point(np.array([3.0, 1.0, 1.0])): {
+                        "red": 0.8,
+                        "green": 0.2,
+                        "blue": 0.0,
+                    }
+                },
+            ),
+            (
+                [Point(np.array([0.5, 3.5, 2.5]))],
+                {
+                    Point(np.array([0.5, 3.5, 2.5])): {
+                        "red": 0,
+                        "green": 0.4,
+                        "blue": 0.6,
+                    }
+                },
+            ),
             (
                 [
-                    Point((2.0, 2.0, 2.0)),
-                    Point((3.0, 1.0, 1.0)),
-                    Point((0.5, 3.5, 2.5)),
+                    Point(np.array([2.0, 2.0, 2.0])),
+                    Point(np.array([3.0, 1.0, 1.0])),
+                    Point(np.array([0.5, 3.5, 2.5])),
                 ],
                 {
-                    Point((2.0, 2.0, 2.0)): [0.2, 0.6, 0.2],
-                    Point((3.0, 1.0, 1.0)): [0.8, 0.2, 0.0],
-                    Point((0.5, 3.5, 2.5)): [0, 0.4, 0.6],
+                    Point(np.array([2.0, 2.0, 2.0])): {
+                        "red": 0.2,
+                        "green": 0.6,
+                        "blue": 0.2,
+                    },
+                    Point(np.array([3.0, 1.0, 1.0])): {
+                        "red": 0.8,
+                        "green": 0.2,
+                        "blue": 0.0,
+                    },
+                    Point(np.array([0.5, 3.5, 2.5])): {
+                        "red": 0,
+                        "green": 0.4,
+                        "blue": 0.6,
+                    },
                 },
             ),
         ],
@@ -64,14 +124,14 @@ class TestKNNClassifier:
     @pytest.mark.parametrize(
         "points,expected_cls",
         [
-            ([Point((2.0, 2.0, 2.0))], ["green"]),
-            ([Point((3.0, 1.0, 1.0))], ["red"]),
-            ([Point((0.5, 3.5, 2.5))], ["blue"]),
+            ([Point(np.array([2.0, 2.0, 2.0]))], ["green"]),
+            ([Point(np.array([3.0, 1.0, 1.0]))], ["red"]),
+            ([Point(np.array([0.5, 3.5, 2.5]))], ["blue"]),
             (
                 [
-                    Point((2.0, 2.0, 2.0)),
-                    Point((3.0, 1.0, 1.0)),
-                    Point((0.5, 3.5, 2.5)),
+                    Point(np.array([2.0, 2.0, 2.0])),
+                    Point(np.array([3.0, 1.0, 1.0])),
+                    Point(np.array([0.5, 3.5, 2.5])),
                 ],
                 ["green", "red", "blue"],
             ),

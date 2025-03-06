@@ -3,27 +3,27 @@ from dataclasses import dataclass, field
 from typing import Any, Generic, Optional, TypeVar
 
 import numpy as np
+from numpy.typing import NDArray
 
-T = TypeVar("T", bound=float)
+T = TypeVar("T", bound=np.floating)
 
 
 @dataclass
 class Point(Generic[T]):
-    coord: tuple[T, ...]
-    cls: Any = None
+    coord: NDArray[T]
 
     def __lt__(self, other):
         if isinstance(other, Point):
-            return self.coord < other.coord
+            return np.all(self.coord < other.coord)
         return NotImplemented
 
     def __eq__(self, other):
         if isinstance(other, Point):
-            return self.coord == other.coord
+            return np.array_equal(self.coord, other.coord)
         return NotImplemented
 
     def __hash__(self):
-        return hash(self.coord)
+        return hash(tuple(self.coord))
 
 
 @dataclass
@@ -39,7 +39,7 @@ class Node(Generic[T]):
         self.is_leaf = self.points is not None
 
 
-class KDTree:
+class KDTree(Generic[T]):
     def __init__(self, points: list[Point[T]], leaf_size: int = 1):
         if leaf_size <= 0:
             raise ValueError("leaf_size must by greater then 0")
@@ -60,12 +60,12 @@ class KDTree:
 
         axis = KDTree._select_axis(train)
 
-        train.sort(key=lambda point: point.coord[axis])
+        sorted_points = sorted(train, key=lambda point: point.coord[axis])
         median = len(train) // 2
 
         return Node(
             axis=axis,
-            median=train[median].coord[axis],
+            median=sorted_points[median].coord[axis],
             left=self._build_kdtree(train[:median]),
             right=self._build_kdtree(train[median:]),
         )
@@ -82,6 +82,12 @@ class KDTree:
             knn_point: list[tuple[float, Point[T]]] = KDTree.search(
                 point, k, self.root, []
             )
+
+            if len(knn_point) < k:
+                raise ValueError(
+                    f"Not enough neighbors found for {point.coord}. Requested {k}, but found {len(knn_point)}."
+                )
+
             dict_neighbors[point] = [heapq.heappop(knn_point)[1] for _ in range(k)]
         return dict_neighbors
 
@@ -134,4 +140,4 @@ class KDTree:
         if len(point1.coord) != len(point2.coord):
             raise ValueError("Points must have the same dimensionality")
 
-        return np.sqrt(sum((x - y) ** 2 for x, y in zip(point1.coord, point2.coord)))
+        return sum((x - y) ** 2 for x, y in zip(point1.coord, point2.coord))
