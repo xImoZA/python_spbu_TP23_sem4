@@ -1,6 +1,6 @@
 import heapq
 from dataclasses import dataclass, field
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -140,4 +140,4 @@ class KDTree(Generic[T]):
         if len(point1.coord) != len(point2.coord):
             raise ValueError("Points must have the same dimensionality")
 
-        return sum((x - y) ** 2 for x, y in zip(point1.coord, point2.coord))
+        return float(np.linalg.norm(point1.coord - point2.coord))

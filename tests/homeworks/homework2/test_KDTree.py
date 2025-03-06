@@ -1,4 +1,3 @@
-import math
 import random
 
 import hypothesis.strategies as st
@@ -53,4 +52,4 @@ class TestKDTree:
             )
 
             for i in range(neighbours):
-                assert math.isclose(stupid_dist[i], tree_dist[i])
+                assert np.isclose(stupid_dist[i], tree_dist[i])

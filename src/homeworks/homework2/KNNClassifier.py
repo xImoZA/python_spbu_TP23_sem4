@@ -1,21 +1,28 @@
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 
 import numpy as np
+from numpy.typing import NDArray
 from src.homeworks.homework2.KDTree import KDTree, Point, T
 
+C = TypeVar("C", bound=np.generic)
 
-class KNNClassifier(Generic[T]):
+
+class KNNClassifier(Generic[T, C]):
     def __init__(self, k: int, leaf_size: int):
         self.k: int = k
         self.leaf_size: int = leaf_size
         self.classifier: KDTree[T] | None = None
-        self.clss: dict[Point[T], Any] | None = None
+        self.clss: dict[Point[T], C] | None = None
 
-    def fit(self, data: list[Point[T]], clss: list[Any]):
+    def fit(self, X: NDArray[T], y: NDArray[C]):
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("The lengths of 'X' and 'y' must be the same.")
+
+        data = [Point(X[i]) for i in range(len(X))]
         self.classifier = KDTree(data, leaf_size=self.leaf_size)
-        self.clss = {point: cls for point, cls in zip(data, clss)}
+        self.clss = {point: cls for point, cls in zip(data, y)}
 
-    def predict_proba(self, points: list[Point[T]]) -> dict[Point[T], dict[Any, float]]:
+    def predict_proba(self, points: list[Point[T]]) -> dict[Point[T], dict[C, float]]:
         if self.classifier is None or self.clss is None:
             raise ValueError("Classifier has not been fitted yet.")
 
@@ -37,9 +44,13 @@ class KNNClassifier(Generic[T]):
 
         return dict_clss
 
-    def predict(self, points: list[Point[T]]) -> list[Any]:
-        dict_clss: dict[Point[T], dict[Any, float]] = self.predict_proba(points)
-        return [
-            max(dict_clss[point].items(), key=lambda item: item[1])[0]
-            for point in points
-        ]
+    def predict(self, data: NDArray[T]) -> NDArray[C]:
+        points = [Point(point) for point in data]
+        dict_clss: dict[Point[T], dict[C, float]] = self.predict_proba(points)
+
+        return np.array(
+            [
+                max(dict_clss[point].items(), key=lambda item: item[1])[0]
+                for point in points
+            ]
+        )
