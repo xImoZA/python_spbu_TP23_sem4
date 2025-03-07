@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 from numpy.typing import NDArray
 from src.homeworks.homework2.KDTree import T
@@ -5,10 +7,16 @@ from src.homeworks.homework2.KNNClassifier import C
 
 
 def train_test_split(
-    X: NDArray[T], y: NDArray[C], test_size=0.2, shuffle=True
+    X: NDArray[T],
+    y: NDArray[C],
+    test_size=0.2,
+    shuffle=True,
+    random_state: int | None = None,
 ) -> tuple[NDArray[T], NDArray[T], NDArray[C], NDArray[C]]:
     n_samples = len(X)
     n_test = int(n_samples * test_size)
+
+    np.random.seed(random_state)
 
     i = np.arange(n_samples)
     if shuffle:
