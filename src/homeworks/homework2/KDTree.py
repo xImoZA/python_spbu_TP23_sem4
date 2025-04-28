@@ -50,7 +50,7 @@ class KDTree(Generic[T]):
         self.root: Node[T] = self._build_kdtree(points)
 
     @staticmethod
-    def _select_axis(points: list[Point[T]]) -> int:
+    def _select_ax(points: list[Point[T]]) -> int:
         variances = np.var([p.coord for p in points], axis=0)
         return int(np.argmax(variances))
 
@@ -58,14 +58,14 @@ class KDTree(Generic[T]):
         if len(train) <= self.leaf_size:
             return Node(points=train)
 
-        axis = KDTree._select_axis(train)
+        ax = KDTree._select_ax(train)
 
-        sorted_points = sorted(train, key=lambda point: point.coord[axis])
+        sorted_points = sorted(train, key=lambda point: point.coord[ax])
         median = len(train) // 2
 
         return Node(
-            axis=axis,
-            median=sorted_points[median].coord[axis],
+            axis=ax,
+            median=sorted_points[median].coord[ax],
             left=self._build_kdtree(train[:median]),
             right=self._build_kdtree(train[median:]),
         )
@@ -98,40 +98,43 @@ class KDTree(Generic[T]):
         node: Node[T] | None,
         neighbors: list[tuple[float, Point[T]]],
     ) -> list[tuple[float, Point[T]]]:
-        if node:
-            if node.is_leaf and node.points:
-                for point in node.points:
-                    if len(point.coord) != len(target.coord):
-                        raise ValueError("Points must have the same dimensionality")
+        if node is None:
+            return neighbors
 
-                    dist: float = KDTree.distance(target, point)
-
-                    if len(neighbors) < k:
-                        heapq.heappush(neighbors, (-dist, point))
-                    elif dist < -neighbors[0][0]:
-                        heapq.heappushpop(neighbors, (-dist, point))
-
+        if node.is_leaf:
+            if node.points is None:
                 return neighbors
 
-            if node.axis is None or node.median is None:
-                raise ValueError(
-                    "If Node is not leaf, axis and median must be not None"
-                )
+            for point in node.points:
+                if len(point.coord) != len(target.coord):
+                    raise ValueError("Points must have the same dimensionality")
 
-            axis = node.axis
-            if target.coord[axis] < node.median:
-                next_node = node.left
-                other_node = node.right
-            else:
-                next_node = node.right
-                other_node = node.left
+                dist: float = KDTree.distance(target, point)
 
-            neighbors = KDTree.search(target, k, next_node, neighbors)
-            if (
-                len(neighbors) < k
-                or abs(target.coord[axis] - node.median) < -neighbors[0][0]
-            ):
-                neighbors = KDTree.search(target, k, other_node, neighbors)
+                if len(neighbors) < k:
+                    heapq.heappush(neighbors, (-dist, point))
+                elif dist < -neighbors[0][0]:
+                    heapq.heappushpop(neighbors, (-dist, point))
+
+            return neighbors
+
+        if node.axis is None or node.median is None:
+            raise ValueError("If Node is not leaf, axis and median must be not None")
+
+        axis = node.axis
+        if target.coord[axis] < node.median:
+            next_node = node.left
+            other_node = node.right
+        else:
+            next_node = node.right
+            other_node = node.left
+
+        neighbors = KDTree.search(target, k, next_node, neighbors)
+        if (
+            len(neighbors) < k
+            or abs(target.coord[axis] - node.median) < -neighbors[0][0]
+        ):
+            neighbors = KDTree.search(target, k, other_node, neighbors)
 
         return neighbors
 

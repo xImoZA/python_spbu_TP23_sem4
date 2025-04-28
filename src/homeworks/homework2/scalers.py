@@ -32,7 +32,12 @@ class MinMaxScaler(Scaler):
         if self.min is None or self.max is None:
             raise ValueError("Scaler has not been fitted yet.")
 
-        return (data - self.min) / (self.max - self.min)
+        return np.divide(
+            data - self.min,
+            self.max - self.min,
+            out=np.zeros_like(data, dtype=np.float64),
+            where=((self.max - self.min) != 0),
+        )
 
 
 class MaxAbsScaler(Scaler):
@@ -46,7 +51,12 @@ class MaxAbsScaler(Scaler):
         if self.max_abs is None:
             raise ValueError("Scaler has not been fitted yet.")
 
-        return data / self.max_abs
+        return np.divide(
+            data,
+            self.max_abs,
+            out=np.zeros_like(data, dtype=np.float64),
+            where=(self.max_abs != 0),
+        )
 
 
 class StandardScaler(Scaler):
@@ -62,4 +72,9 @@ class StandardScaler(Scaler):
         if self.mean is None or self.std is None:
             raise ValueError("Scaler has not been fitted yet.")
 
-        return (data - self.mean) / self.std
+        return np.divide(
+            data - self.mean,
+            self.std,
+            out=np.zeros_like(data, dtype=np.float64),
+            where=(self.std != 0),
+        )

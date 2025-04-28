@@ -12,7 +12,8 @@ class KNNClassifier(Generic[T, C]):
         self.k: int = k
         self.leaf_size: int = leaf_size
         self.classifier: KDTree[T] | None = None
-        self.clss: dict[Point[T], C] | None = None
+        self.clss: dict[Point[T], list[C]] | None = None
+        self.all_classes: set[C] = set()
 
     def fit(self, X: NDArray[T], y: NDArray[C]):
         if X.shape[0] != y.shape[0]:
@@ -20,7 +21,11 @@ class KNNClassifier(Generic[T, C]):
 
         data = [Point(X[i]) for i in range(len(X))]
         self.classifier = KDTree(data, leaf_size=self.leaf_size)
-        self.clss = {point: cls for point, cls in zip(data, y)}
+
+        self.clss = {}
+        for point, cls in zip(data, y):
+            self.clss.setdefault(point, []).append(cls)
+            self.all_classes.add(cls)
 
     def predict_proba(self, points: list[Point[T]]) -> dict[Point[T], dict[C, float]]:
         if self.classifier is None or self.clss is None:
@@ -33,12 +38,17 @@ class KNNClassifier(Generic[T, C]):
         dict_clss = {}
         for point in points:
             neighbors = dict_neighbors[point]
-            odds = {}
-            for cls in set(self.clss.values()):
-                odds[cls] = (
-                    len([point for point in neighbors if self.clss[point] == cls])
-                    / self.k
-                )
+
+            neighbors_clss: list[C] = []
+            for neighbor in neighbors:
+                clss = self.clss[neighbor]
+                for cls in clss:
+                    neighbors_clss.append(cls)
+
+            total = len(neighbors_clss)
+            odds: dict[C, float] = {}
+            for cls in self.all_classes:
+                odds[cls] = neighbors_clss.count(cls) / total
 
             dict_clss[point] = odds
 
